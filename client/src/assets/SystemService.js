@@ -1,37 +1,16 @@
 import SystemApps from '../apps/SystemApps';
+import Console from './Console';
 import Files from './Files';
 import globalState from './GlobalState';
+import ProcessService from './ProcessService';
 
 const getDirectoryContents = (dir) => {
     return Object.keys(Files.contents[dir]);
 }
 
-let ConsoleInterface = {
-    OutputStream: {
-        send(content) {
-            content.split('\n').forEach(line => {
-                globalState.consoleLines.push(line);
-            });
-        },
-        append(content) {
-            globalState.consoleLines[globalState.consoleLines.length - 1] += content;
-        },
-        clear() {
-            while (globalState.consoleLines.length)
-                globalState.consoleLines.pop();
-        }
-    },
-    InputStream: {
-        send(content) {
-            
-        }
-    }
-}
-
-
 const Shell = (program, argv = []) => {
     program(argv, (response) => {
-        ConsoleInterface.OutputStream.send(response);
+        Console.print(response);
     });
 }
 
@@ -47,19 +26,22 @@ let CLI = {
         //     programName = programName.substr(2);
     
         const argv = input.substr(input.indexOf(" ") + 1).split(" ");
-        if (!options?.quietMode)
-            ConsoleInterface.OutputStream.append(input);
+        if (!(options?.quietMode || ProcessService.Process)) {
+            Console.OutputStream.append(input);
+            if (input.length)
+                globalState.commandHistory = [input, ...globalState.commandHistory];
+        }
 
         if (isFile) {
             Shell(SystemApps.bash, [programName]);
         } else if (SystemApps[programName]) {
             Shell(SystemApps[programName], argv);
         } else {
-            ConsoleInterface.OutputStream.send("Command not found: " + programName);
+            Console.print("Command not found: " + programName);
         }
 
-        if (!options?.quietMode)
-            ConsoleInterface.OutputStream.send(this.shellIntro());
+        if (options?.intro || !(options?.quietMode || ProcessService.Process))
+            Console.print(this.shellIntro());
     },
     autocomplete(input, response) {
         const items = getDirectoryContents(globalState.currentDirectory);
@@ -69,14 +51,13 @@ let CLI = {
             return response("./" + result);
         
         CLI.execute("ls", {quietMode: true});
-        ConsoleInterface.OutputStream.send(this.shellIntro());
+        Console.print(this.shellIntro());
         return response(null);
     }
 }
 
 export default {
     getDirectoryContents,
-    ConsoleInterface,
     CLI,
     Shell
 }

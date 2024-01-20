@@ -1,8 +1,13 @@
+import Console from "@/assets/Console";
 import Files from "@/assets/Files";
 import globalState from "@/assets/GlobalState";
+import ProcessService from "@/assets/ProcessService";
 import SystemService from "@/assets/SystemService";
 
 const packages = {
+    history(argv, response) {
+        return response(`Command history: \n${globalState.commandHistory.join("\n")}`)
+    },
     reboot(argv, response) {
         response([
             "# # ThomasCLI v0.1.0 # # ",
@@ -36,8 +41,9 @@ const packages = {
         
         if (!item) {
             return response(`bash ${filename}: not found`);
+        } else if (item.Manifest.process) {
+            ProcessService.StartProcess(item);
         } else if (item.Content) {
-            // executable
             SystemService.Shell(item.Content);
         } else {
             item.split("\n").forEach(line => {
@@ -112,7 +118,7 @@ const packages = {
         return response(globalState.currentDirectory);
     },
     clear() {
-        SystemService.ConsoleInterface.OutputStream.clear();
+        Console.OutputStream.clear();
     },
     exit(argv, response) {
         response("Self-destruct in 1 second.");

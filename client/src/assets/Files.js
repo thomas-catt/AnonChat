@@ -1,6 +1,4 @@
 import ChatApp from "../apps/ChatApp";
-import README from "../assets/README.txt";
-import SystemService from "./SystemService";
 
 const contents = {
     '/': {
@@ -9,11 +7,6 @@ const contents = {
     }
 }
 
-const run = (directory, filename) => {
-    ConsoleInterface.OutputStream.send(this.shellIntro());
-}
-
 export default {
     contents,
-    run
 }
