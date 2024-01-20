@@ -71,7 +71,6 @@ export default {
             }
         },
         onInputChange(event) {
-            console.log("oninput called")
             this.historyIndex = 0;
         },
         enterInput(input) {
