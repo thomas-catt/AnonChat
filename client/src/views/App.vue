@@ -1,6 +1,6 @@
 <template>
     <pre class="console-line">{{ consoleLines.join("\n") }}</pre>
-    <input class="input-line" contenteditable="true" @keydown="inputEventHandler" @input="onInputChange" v-model="consoleInput" />
+    <input class="input-line" contenteditable="true" @keydown="inputEventHandler" @keyup="inputEventHandler" @input="onInputChange" v-model="consoleInput" />
 </template>
 <script>
 import SystemService from '@/assets/SystemService';
@@ -18,7 +18,37 @@ export default {
         }
     },
     methods: {
+        processEventHandler(event) {
+            if (event.ctrlKey && event.type == "keydown") {
+                switch (event.key) {
+                    case 'c': case 'x':
+                        Console.OutputStream.append("^" + event.key.toUpperCase());
+                        ProcessService.KillProcess();
+                        event.preventDefault();
+                        break;
+
+                    default:
+                        ProcessService.SendKeyEvent(event);
+                        break;
+                }
+            } else if (ProcessService.SendKeyEvent(event)) {
+                event.preventDefault();
+            } else if (event.type == "keydown") {
+                switch (event.key) {
+                    case "Enter":
+                        event.preventDefault();
+                        this.enterInput(this.consoleInput.trim());
+                        this.consoleInput = '';
+                        break;
+                }
+            }
+        },
         inputEventHandler(event) {
+            if (ProcessService.Process)
+                return this.processEventHandler(event);
+
+            if (event.type != "keydown") return;
+            
             if (event.ctrlKey) {
                 switch (event.key) {
                     case 'l':
@@ -26,13 +56,8 @@ export default {
                         event.preventDefault();
                         break;
                         
-                    case 'c':case 'x':
-                        if (ProcessService.Process) {
-                            Console.OutputStream.append("^" + event.key.toUpperCase());
-                            ProcessService.KillProcess();
-                        } else
-                            this.consoleInput += "^" + event.key.toUpperCase();
-                        
+                    case 'c': case 'x':
+                        this.consoleInput += "^" + event.key.toUpperCase();
                         event.preventDefault();
                         break;
                 }

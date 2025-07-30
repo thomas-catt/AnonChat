@@ -13,11 +13,14 @@ body {
 .console-line {
     margin: 0;
     display: inline;
+    word-break: break-all;
+    white-space: pre-wrap;
 }
 
 .input-line {
     outline: none;
     margin: 0;
+    padding: 0;
     background: none;
     border: none;
     display: inline;

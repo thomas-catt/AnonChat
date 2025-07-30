@@ -1,36 +1,22 @@
 import Console from "@/assets/Console";
 import ProcessService from "@/assets/ProcessService";
-import SystemService from "@/assets/SystemService";
 
-const Content = (argv, response) => {
-    return response("This will be the chat app.");
+const initialState = {
+    userId: "",
 }
 
-const printCount = (appState) => Console.print(`You typed: ${appState.input} (x${appState.count})`);
 
-
-const onCreate = (argv) => {
-    let appState = {
-        count: 0,
-        input: "",
-    };
-
-    Console.print("Writing game\nType something (exit to exit): ");
-    return appState
+const onCreate = ({argv}) => {
+    Console.print("Welcome to the Chat App!");
+    return initialState
 }
 
-const onInput = (input, appState) => {
-    if (input == "exit") {
-        return ProcessService.KillProcess();
-    }
-    
-    appState.input = input;
-    appState.count++;
-    printCount(appState);
-    Console.print("Type something (exit to exit): ");
+const onKeyEvent = ({event, state}) => {
+    console.log(event);
+    Console.print(event.type + " " + event.key);
 }
 
-const onDestroy = (appState) => {
+const onDestroy = (state) => {
     Console.print("Bye-bye!");
 }
 
@@ -38,12 +24,12 @@ const Manifest = {
     name: "Chat App",
     description: "An anonymous chat app that I intend to make.",
     process: true,
+    environment: "debug",
 }
 
 export default {
-    Content,
     onCreate,
-    onInput,
+    onKeyEvent,
     onDestroy,
     Manifest
 }

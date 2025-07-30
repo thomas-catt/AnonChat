@@ -5,8 +5,7 @@ import SystemService from "./SystemService";
 const InputStream = {
     send(input) {
         if (ProcessService.Process) {
-            Console.OutputStream.append(input);
-            ProcessService.Process?.onInput(input, ProcessService.State);
+            ProcessService.SendInput(input);
         } else {
             SystemService.CLI.execute(input);
         }
@@ -14,6 +13,10 @@ const InputStream = {
 }
 
 const print = (input) => {
+    if (input === undefined) input = "undefined";
+    if (input === null) input = "null";
+    if (typeof input !== "string")
+        input = JSON.stringify(input, null, 2);
     Console.OutputStream.send(input);
 }
 

@@ -35,7 +35,11 @@ const packages = {
         if (!isFile) {
             return SystemService.CLI.execute(filename, {quietMode: true});
         }
-        filename = filename.replace("./", "").replace("/", "");
+
+        if (filename.startsWith("./"))
+            filename = filename.replace("./", "");
+        else if (filename.startsWith("/"))
+            filename = filename.replace("/", "");
 
         const item = Files.contents[globalState.currentDirectory][filename];
         
@@ -64,7 +68,7 @@ const packages = {
             return response(`cat ${filename}: not found`);
         } else if (item.Content) {
             // executable
-            return response(`cat ${filename}: executable detected, response refused.`);
+            return response(`cat ${filename}: this is not a plain text file.`);
         } else {
             return response(item);
         }    
@@ -121,10 +125,7 @@ const packages = {
         Console.OutputStream.clear();
     },
     exit(argv, response) {
-        response("Self-destruct in 1 second.");
-        setTimeout(() => {
-            document.body.innerHTML = '<code class="c-red">console killed. F5 to reload.</code>'
-        }, 1000)
+        document.body.innerHTML = '<code class="c-red">console killed. please reload.</code>'
     },
     [""]: (argv, response) => {
 
