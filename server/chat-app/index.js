@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
 		for (const [id, afkTime] of Object.entries(afkUsers)) {
 			if (now - afkTime > 60000) {
 				delete afkUsers[id];
-				console.log("Removing AFK user after 5 minutes:", id);
+				console.log("Removing AFK user after 1 minute:", id);
 				io.emit("online-users", { action: "remove", userId: id, onlineUsers: Object.keys(userLastPing).length, afkUsers: Object.keys(afkUsers).length });
 			}
 		}
