@@ -116,13 +116,13 @@ const connectSocket = () => {
 
 
     ProcessService.State.socket.on("reconnect_failed", () => {
-        Console.print("Failed to reconnect to chat server, it's probably down right now.\n", {text: "white", bg: "red"});
+        Console.print("Failed to reconnect to chat server, it's probably down right now.\n", {text: "red"});
         ProcessService.State.connectionStatus = "disconnected";
         if (pingInterval) clearInterval(pingInterval);
     });
 
     ProcessService.State.socket.on("disconnect", () => {
-        Console.print("Lost connection to chat server 🥀, type /connect to connect again." + "\n", {text: "white", bg: "red"});
+        Console.print("Lost connection to chat server 🥀, type /connect to connect again." + "\n", {text: "red"});
         ProcessService.State.connectionStatus = "disconnected";
         if (pingInterval) clearInterval(pingInterval);
     });
