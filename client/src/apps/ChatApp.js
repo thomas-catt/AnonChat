@@ -23,6 +23,42 @@ const formatDate = (date) => {
     return new Date(date).toLocaleTimeString([], options);
 }
 
+const getColor = (userId) => {
+    const colors = [
+        {bg: "red-dark", text: "white"},
+        {bg: "red", text: "white"},
+        {bg: "red-bright", text: "white"},
+        {bg: "green-dark", text: "white"},
+        {bg: "green", text: "black"},
+        {bg: "green-bright", text: "black"},
+        {bg: "yellow-dark", text: "white"},
+        {bg: "yellow", text: "black"},
+        {bg: "yellow-bright", text: "black"},
+        {bg: "blue-dark", text: "white"},
+        {bg: "blue", text: "white"},
+        {bg: "blue-bright", text: "white"},
+        {bg: "magenta-dark", text: "white"},
+        {bg: "magenta", text: "white"},
+        {bg: "magenta-bright", text: "white"},
+        {bg: "cyan-dark", text: "white"},
+        {bg: "cyan", text: "black"},
+        {bg: "cyan-bright", text: "black"}
+    ];
+
+    // generate random number based on userId
+    var i = 0, n = 0;
+    while (i < userId.length) {
+        if (isNaN(parseInt(userId[i]))) {
+            i++;
+            continue;
+        }
+        n += parseInt(userId[i], 10);
+        i++;
+    }
+    const index = n % colors.length; // Use last character of userId for color
+    return colors[index];
+}
+    
 
 const connectSocket = () => {
     // Placeholder for socket connection logic
@@ -45,7 +81,11 @@ const connectSocket = () => {
 
     const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:5001`;
     ProcessService.State.socket = io(url, {
-        reconnection: false,
+        // reconnection: false,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 10000,
         secure: location.protocol === 'https:'
     });
 
@@ -61,30 +101,58 @@ const connectSocket = () => {
         }, 2000);
     });
 
-    ProcessService.State.socket.on("connect_error", () => {
-        Console.print("Failed to connect to chat server, type /connect to try again." + "\n", {text: "white", bg: "red"});
+    const connectionError  = (reason) => {
+        Console.print("Failed to connect to chat server (" + reason + "), type /connect to try again." + "\n", {text: "white", bg: "red"});
+        ProcessService.State.connectionStatus = "disconnected";
+        if (pingInterval) clearInterval(pingInterval);
+    }
+
+    ProcessService.State.socket.on("connect_error", () => connectionError("unknown error occured"));
+    ProcessService.State.socket.on("reconnect_error", () => connectionError("unknown error occured"));
+    ProcessService.State.socket.on("reconnect", () => {
+        ProcessService.State.connectionStatus = "connected";
+        Console.print("Connection reestablished.\n", {text: "green"});
+    });
+
+
+    ProcessService.State.socket.on("reconnect_failed", () => {
+        Console.print("Failed to reconnect to chat server, it's probably down right now.\n", {text: "white", bg: "red"});
+        ProcessService.State.connectionStatus = "disconnected";
+        if (pingInterval) clearInterval(pingInterval);
+    });
+
+    ProcessService.State.socket.on("disconnect", () => {
+        Console.print("Lost connection to chat server 🥀, type /connect to connect again." + "\n", {text: "white", bg: "red"});
         ProcessService.State.connectionStatus = "disconnected";
         if (pingInterval) clearInterval(pingInterval);
     });
 
     ProcessService.State.socket.on("online-users", ({userId, action, onlineUsers, afkUsers}) => {
+        const color = getColor(userId);
+        
         ProcessService.State.onlineUsers = onlineUsers;
         ProcessService.State.afkUsers = afkUsers;
         if (action === "connect") {
             if (userId === ProcessService.State.userId) {
                 Console.print(`${ProcessService.State.onlineUsers} users currently online.` + "\n", {text: "green"});
+                Console.print(`Your color is `, {text: "gray"});
+                Console.print(color.bg + "\n", color);
             } else {
-                Console.print(`An anonymous user has joined. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "green"});
+                Console.print(`An anonymous user`, color);
+                Console.print(` has joined. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "green"});
             }
             
         } else if (action === "afk") {
-            Console.print(`An anonymous user has gone AFK. (${ProcessService.State.onlineUsers} online, ${ProcessService.State.afkUsers} AFK)` + "\n", {text: "yellow"});
+            Console.print(`An anonymous user`, color);
+            Console.print(` has gone AFK. (${ProcessService.State.onlineUsers} online, ${ProcessService.State.afkUsers} AFK)` + "\n", {text: "yellow"});
         } else if (action === "back") {
-            Console.print(`An anonymous user is back from AFK. (${ProcessService.State.onlineUsers} online, ${ProcessService.State.afkUsers} AFK)` + "\n", {text: "green"});
+            Console.print(`An anonymous user`, color);
+            Console.print(` is back from being AFK. (${ProcessService.State.onlineUsers} online, ${ProcessService.State.afkUsers} AFK)` + "\n", {text: "green"});
         } else if (action === "remove") {
             Console.print(`An AFK user has been removed for being AFK. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
         } else if (action === "disconnect") {
-            Console.print(`An anonymous user has left. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
+            Console.print(`An anonymous user`, color);
+            Console.print(` has left. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
         }
     });
 
@@ -93,18 +161,19 @@ const connectSocket = () => {
         ProcessService.State.afkUsers = afkUsers;
         ProcessService.State.latency = latency;
 
-        if ((latency >= 1000) && !ProcessService.State.latencyWarned) {
-            Console.print(`[!] You have very high latency (${latency}ms) from the chat server. Messages would feel very slow.` + "\n", {bg: "yellow-dark", bold: true});
+        if ((latency >= 500) && !ProcessService.State.latencyWarned) {
+            Console.print(`[!] You have very high latency (${latency}ms) from the chat server. Chat would feel very slow or delayed.` + "\n", {bg: "yellow-dark", bold: true});
             ProcessService.State.latencyWarned = true;
         }
     });
 
     ProcessService.State.socket.on("message", (message) => {
-        // if (message.userId != ProcessService.State.userId && message.message) {
-            Console.print(formatDate(message.time) + " ", {text: "gray"});
-            Console.print(" > ", {text: "cyan", bg: "black"});
-            Console.print(message.message + "\n");
-        // }
+        const color = getColor(message.userId);
+        console.log(color, message);
+        
+        Console.print(formatDate(message.time) + " ", {text: "gray"});
+        Console.print(" > ", color);
+        Console.print(message.message + "\n");
     });
 
 }
@@ -127,7 +196,8 @@ const onCreate = ({argv}) => {
     Console.print("\n");
     Console.print("Welcome to the anonymous chat room where every message appears without a name.\n");
     Console.print("\n");
-    Console.print("Type /exit to leave or /help for all commands.\n");
+    Console.print("Type /exit to leave or /status to check info.\n");
+    Console.print("See /help for all commands.\n");
     Console.print("\n");
 
     connectSocket();
@@ -157,6 +227,9 @@ const onInput = ({input, state}) => {
                 connectSocket();
                 break;
             case "status":
+                const color = getColor(ProcessService.State.userId);
+                Console.print(`Your color: `);
+                Console.print(color.bg + "\n", color);
                 Console.print(`Connection Status: `);
                 Console.print(`${ProcessService.State.connectionStatus} [${ProcessService.State.userId}]\n`, {text: {
                     disconnected: "red",
@@ -181,7 +254,7 @@ const onInput = ({input, state}) => {
     } else {
         if (input.trim().length > 0) {
             try {
-                ProcessService.State.socket.emit("message", {time: new Date(), message: input});
+                ProcessService.State.socket.emit("message", {time: new Date(), message: input, userId: ProcessService.State.userId});
             } catch (error) {
                 Console.print("Couldn't send message to the chat server.", {text: "white", bg: "red"});
             }
