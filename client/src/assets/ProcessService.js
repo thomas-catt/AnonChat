@@ -38,7 +38,6 @@ export default {
         try {
             if (this.Process && this.Process.onKeyEvent) {
                 this.Process.onKeyEvent({event});
-                console.log("key event sent");
                 
                 return true;
             } else {

@@ -9,6 +9,7 @@ const initialState = {
     onlineUsers: 0,
     afkUsers: 0,
     latency: -1,
+    latencyWarned: false
 }
 
 const eventSettings = {
@@ -27,8 +28,6 @@ const connectSocket = () => {
     // Placeholder for socket connection logic
     if (ProcessService.State.connectionStatus === "connected" || (ProcessService.State.socket != null && ProcessService.State.socket.connected)) {
         Console.print("Already connected to chat server." + "\n", {text: "yellow"});
-        console.log(ProcessService.State.connectionStatus);
-        console.log(ProcessService.State.socket);
         return;
     }
 
@@ -38,9 +37,13 @@ const connectSocket = () => {
     Console.print("Connecting to chat server..." + "\n", {text: "gray"});
     ProcessService.State.connectionStatus = "connecting";
 
-    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:5001`;
-    ProcessService.State.socket = io(url, { transports: ['websocket'], secure: location.protocol === 'https:' });
+    // Clean up any existing socket first
+    if (ProcessService.State.socket) {
+        ProcessService.State.socket.disconnect();
+        ProcessService.State.socket = null;
+    }
 
+    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:5001`;
     ProcessService.State.socket = io(url, {
         reconnection: false,
         secure: location.protocol === 'https:'
@@ -79,7 +82,7 @@ const connectSocket = () => {
         } else if (action === "back") {
             Console.print(`An anonymous user is back from AFK. (${ProcessService.State.onlineUsers} online, ${ProcessService.State.afkUsers} AFK)` + "\n", {text: "green"});
         } else if (action === "remove") {
-            Console.print(`An AFK user has been removed. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
+            Console.print(`An AFK user has been removed for being AFK. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
         } else if (action === "disconnect") {
             Console.print(`An anonymous user has left. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
         }
@@ -90,8 +93,9 @@ const connectSocket = () => {
         ProcessService.State.afkUsers = afkUsers;
         ProcessService.State.latency = latency;
 
-        if (latency >= 1000) {
-            Console.print(`High latency! (${latency}ms)` + "\n", {bg: "yellow-dark"});
+        if ((latency >= 1000) && !ProcessService.State.latencyWarned) {
+            Console.print(`[!] You have very high latency (${latency}ms) from the chat server. Messages would feel very slow.` + "\n", {bg: "yellow-dark", bold: true});
+            ProcessService.State.latencyWarned = true;
         }
     });
 

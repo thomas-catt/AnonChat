@@ -4,7 +4,7 @@
     @click="$refs.inputLine && $refs.inputLine.focus()"
 ></div>
 <div ref="consoleLine" class="console-line">
-    <span v-for="(line, idx) in consoleLines" :key="idx" :class="'c-' + consoleLineColors[idx].text + ' bg-' + consoleLineColors[idx].bg">{{ line }}</span>
+    <span v-for="(line, idx) in consoleLines" :key="idx" :class="'c-' + consoleLineColors[idx].text + ' bg-' + consoleLineColors[idx].bg + (consoleLineColors[idx].bold ? ' bold' : '')">{{ line }}</span>
     <div contenteditable="true" ref="inputLine" class="input-line" @keydown="inputEventHandler" @keyup="inputEventHandler" @input="onInputChange"></div>
 </div>
 </template>

@@ -45,6 +45,7 @@ body {
 }
 
 /* Console text colors */
+.bold { font-weight: bold; }
 .c-red-dark { color: #400; }
 .c-red { color: #f88; }
 .c-red-bright { color: #f00; }
