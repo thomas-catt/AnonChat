@@ -3,15 +3,19 @@ import { Server } from "socket.io";
 import dotenv from 'dotenv';
 dotenv.config()
 import fs from 'fs';
+import express from 'express';
 
-const production = process.env.NODE_ENV == 'production'
+const app = express();
+
+
+const production = true
 const sslKey = production ? fs.readFileSync(process.env.SSL_KEY, 'utf8') : ''
 const sslCert = production ? fs.readFileSync(process.env.SSL_CERT, 'utf8') : ''
 
 const httpServer = createServer({
   key: sslKey,
   cert: sslCert,
-});
+}, app);
 
 const io = new Server(httpServer, {
 	cors: {
