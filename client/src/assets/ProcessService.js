@@ -12,8 +12,10 @@ export default {
     StartProcess(process, argv) {
         try {
             this.Process = process;
-            this.State = this.Process.onCreate({argv});
+            const eventSettings = this.Process.onCreate({argv});
             this.State.__eventSettings__ = defaultEventSettings;
+            if (eventSettings)
+                this.State.__eventSettings__ = {...defaultEventSettings, ...eventSettings};
         } catch (error) {
             this.KillProcess(-1, error);
         }
@@ -23,8 +25,8 @@ export default {
         try {
             if (this.Process && this.Process.onInput) {
                     if (this.State.__eventSettings__.PrintInput)
-                        Console.OutputStream.append(input);
-                    this.Process.onInput({input, state: this.State});
+                        Console.print(input);
+                    this.Process.onInput({input});
 
             }
         } catch (error) {
@@ -35,7 +37,7 @@ export default {
     SendKeyEvent(event) {
         try {
             if (this.Process && this.Process.onKeyEvent) {
-                this.Process.onKeyEvent({event, state: this.State});
+                this.Process.onKeyEvent({event});
                 console.log("key event sent");
                 
                 return true;
@@ -51,24 +53,31 @@ export default {
     KillProcess(code = 0, error = null) {
         if (code == -1) {
             if (this.Process.Manifest.environment == "production")
-                Console.print("The application has crashed unexpectedly.");
+                Console.printLn("The application has crashed unexpectedly.");
             else {
                 if (error.message)
                     error.toString().split("\n").forEach(line => {
-                        Console.print(line);
+                        Console.printLn(line);
                     });
                 else
-                    Console.print("Error: " + error);
+                    Console.printLn("Error: " + error);
 
-                Console.print("<stack trace>");
-                Console.print(error ? error.stack.split("\n").map(a => `\t${a}`).join("\n") : "No stack trace available.");
-                Console.print("<end stack trace>");
-                Console.print("The application will now close.");
+                Console.printLn("<stack trace>");
+                Console.printLn(error ? error.stack.split("\n").map(a => `\t${a}`).join("\n") : "No stack trace available.");
+                Console.printLn("<end stack trace>");
+                Console.printLn("The application will now close.");
             }
         }
-        this.Process = null;
-        this.State = {};
-        Console.print(SystemService.CLI.shellIntro());
+
+        try {
+            if (code == 0)
+                this.Process.onDestroy();
+            this.Process = null;
+            Object.keys(this.State).forEach(key => delete this.State[key]);
+            Console.print(SystemService.CLI.shellIntro());
+        } catch (error) {
+            this.KillProcess(-1, error);
+        }
     }
 
 }

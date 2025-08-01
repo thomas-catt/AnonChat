@@ -122,13 +122,13 @@ const packages = {
         return response(globalState.currentDirectory);
     },
     clear() {
-        Console.OutputStream.clear();
+        Console.clear();
     },
     exit(argv, response) {
         document.body.innerHTML = '<code class="c-red">console killed. please reload.</code>'
     },
     [""]: (argv, response) => {
-
+        
     }
 };
 

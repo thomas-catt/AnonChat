@@ -10,7 +10,7 @@ const getDirectoryContents = (dir) => {
 
 const Shell = (program, argv = []) => {
     program(argv, (response) => {
-        Console.print(response);
+        Console.printLn(response);
     });
 }
 
@@ -27,7 +27,7 @@ let CLI = {
     
         const argv = input.substr(input.indexOf(" ") + 1).split(" ");
         if (!(options?.quietMode || ProcessService.Process)) {
-            Console.OutputStream.append(input);
+            Console.printLn(input);
             if (input.length)
                 globalState.commandHistory = [input, ...globalState.commandHistory];
         }
@@ -37,7 +37,7 @@ let CLI = {
         } else if (SystemApps[programName]) {
             Shell(SystemApps[programName], argv);
         } else {
-            Console.print("Command not found: " + programName);
+            Console.printLn("Command not found: " + programName);
         }
 
         if (options?.intro || !(options?.quietMode || ProcessService.Process))

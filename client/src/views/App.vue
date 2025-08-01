@@ -1,6 +1,12 @@
 <template>
-    <pre class="console-line">{{ consoleLines.join("\n") }}</pre>
-    <input class="input-line" contenteditable="true" @keydown="inputEventHandler" @keyup="inputEventHandler" @input="onInputChange" v-model="consoleInput" />
+<div
+    class="focus-redirect-underlay"
+    @click="$refs.inputLine && $refs.inputLine.focus()"
+></div>
+<div ref="consoleLine" class="console-line">
+    <span v-for="(line, idx) in consoleLines" :key="idx" :class="'c-' + consoleLineColors[idx].text + ' bg-' + consoleLineColors[idx].bg">{{ line }}</span>
+    <div contenteditable="true" ref="inputLine" class="input-line" @keydown="inputEventHandler" @keyup="inputEventHandler" @input="onInputChange"></div>
+</div>
 </template>
 <script>
 import SystemService from '@/assets/SystemService';
@@ -12,6 +18,7 @@ export default {
     data() {
         return {
             consoleLines: [],
+            consoleLineColors: [],
             consoleInput: "",
             refreshState: false,
             historyIndex: 0
@@ -22,7 +29,7 @@ export default {
             if (event.ctrlKey && event.type == "keydown") {
                 switch (event.key) {
                     case 'c': case 'x':
-                        Console.OutputStream.append("^" + event.key.toUpperCase());
+                        Console.print("^" + event.key.toUpperCase());
                         ProcessService.KillProcess();
                         event.preventDefault();
                         break;
@@ -38,12 +45,13 @@ export default {
                     case "Enter":
                         event.preventDefault();
                         this.enterInput(this.consoleInput.trim());
-                        this.consoleInput = '';
+                        event.target.textContent = '';
                         break;
                 }
             }
         },
         inputEventHandler(event) {
+            this.consoleInput = event.target.textContent || '';
             if (ProcessService.Process)
                 return this.processEventHandler(event);
 
@@ -57,7 +65,7 @@ export default {
                         break;
                         
                     case 'c': case 'x':
-                        this.consoleInput += "^" + event.key.toUpperCase();
+                        event.target.textContent += "^" + event.key.toUpperCase();
                         event.preventDefault();
                         break;
                 }
@@ -68,7 +76,7 @@ export default {
                     event.preventDefault();
                     this.historyIndex = 0;
                     this.enterInput(this.consoleInput.trim());
-                    this.consoleInput = '';
+                    event.target.textContent = '';
                     break;
             
                 case "Tab":
@@ -83,7 +91,7 @@ export default {
                     
                 case "ArrowUp": case "ArrowDown":
                     if (globalState.commandHistory.length > 0) {
-                        this.consoleInput = globalState.commandHistory[this.historyIndex];
+                        event.target.textContent = globalState.commandHistory[this.historyIndex];
                         const direction = event.key == "ArrowUp" ? 1 : -1;
                         let index = this.historyIndex + direction;
 
@@ -103,8 +111,22 @@ export default {
         }
     },
     mounted() {
-        SystemService.CLI.execute("reboot", {quietMode: true, intro: true});
+        // SystemService.CLI.execute("reboot", {quietMode: true, intro: true});
+        SystemService.CLI.execute("./chat", {quietMode: true});
         this.consoleLines = globalState.consoleLines
+        this.consoleLineColors = globalState.consoleLineColors
+
+        this.$nextTick(() => {
+            this.$refs.inputLine && this.$refs.inputLine.focus();
+            // Focus input on any click anywhere in the window
+            window.addEventListener("click", () => {
+                this.$refs.inputLine && this.$refs.inputLine.focus();
+            });
+            document.body.addEventListener("click", () => {
+                this.$refs.inputLine && this.$refs.inputLine.focus();
+            });
+        });
+
     }
 }
 </script>

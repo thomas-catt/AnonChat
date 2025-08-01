@@ -2,12 +2,23 @@ body {
     background-color: black;
     color: white;
     font-family: monospace;
-    font-size: 18px;
+    font-size: 1rem;
 }
+
+/* * {outline: 1px solid red;} */
 
 *::selection {
     background-color: white;
     color: black;
+}
+
+.focus-redirect-underlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
 }
 
 .console-line {
@@ -17,18 +28,82 @@ body {
     white-space: pre-wrap;
 }
 
+.console-line > span {
+    display: inline;
+}
+
 .input-line {
     outline: none;
     margin: 0;
-    padding: 0;
+    padding-right: 0.2rem;
     background: none;
     border: none;
-    display: inline;
+    display: inline-block;
     font-family: inherit;
     color: inherit;
     font-size: inherit;
 }
 
-.c-red {
-    color: red;
-}
+/* Console text colors */
+.c-red-dark { color: #400; }
+.c-red { color: #f88; }
+.c-red-bright { color: #f00; }
+
+.c-green-dark { color: #040; }
+.c-green { color: #8f8; }
+.c-green-bright { color: #0f0; }
+
+.c-yellow-dark { color: #440; }
+.c-yellow { color: #ff8; }
+.c-yellow-bright { color: #ff0; }
+
+.c-blue-dark { color: #004; }
+.c-blue { color: #88f; }
+.c-blue-bright { color: #00f; }
+
+.c-magenta-dark { color: #404; }
+.c-magenta { color: #f8f; }
+.c-magenta-bright { color: #f0f; }
+
+.c-cyan-dark { color: #044; }
+.c-cyan { color: #8ff; }
+.c-cyan-bright { color: #0ff; }
+
+.c-gray-dark { color: #222; }
+.c-gray { color: #888; }
+.c-gray-bright { color: #ccc; }
+
+.c-white { color: #fff; }
+.c-black { color: #000; }
+
+/* Console background colors */
+.bg-red-dark { background-color: #400; }
+.bg-red { background-color: #f00; }
+.bg-red-bright { background-color: #f88; }
+
+.bg-green-dark { background-color: #040; }
+.bg-green { background-color: #0f0; }
+.bg-green-bright { background-color: #8f8; }
+
+.bg-yellow-dark { background-color: #440; }
+.bg-yellow { background-color: #ff0; }
+.bg-yellow-bright { background-color: #ff8; }
+
+.bg-blue-dark { background-color: #004; }
+.bg-blue { background-color: #00f; }
+.bg-blue-bright { background-color: #88f; }
+
+.bg-magenta-dark { background-color: #404; }
+.bg-magenta { background-color: #f0f; }
+.bg-magenta-bright { background-color: #f8f; }
+
+.bg-cyan-dark { background-color: #044; }
+.bg-cyan { background-color: #0ff; }
+.bg-cyan-bright { background-color: #8ff; }
+
+.bg-gray-dark { background-color: #222; }
+.bg-gray { background-color: #ccc; }
+.bg-gray-bright { background-color: #888; }
+
+.bg-white { background-color: #fff; }
+.bg-black { background-color: #000; }
