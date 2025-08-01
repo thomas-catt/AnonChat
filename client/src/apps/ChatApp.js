@@ -25,7 +25,7 @@ const formatDate = (date) => {
 
 const connectSocket = () => {
     // Placeholder for socket connection logic
-    if (ProcessService.State.connectionStatus === "connected" || ProcessService.State.socket != null) {
+    if (ProcessService.State.connectionStatus === "connected" || (ProcessService.State.socket != null && ProcessService.State.socket.connected)) {
         Console.print("Already connected to chat server." + "\n", {text: "yellow"});
         console.log(ProcessService.State.connectionStatus);
         console.log(ProcessService.State.socket);
@@ -38,8 +38,12 @@ const connectSocket = () => {
     Console.print("Connecting to chat server..." + "\n", {text: "gray"});
     ProcessService.State.connectionStatus = "connecting";
 
-    ProcessService.State.socket = io(":5001", {
+    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:5001`;
+    ProcessService.State.socket = io(url, { transports: ['websocket'], secure: location.protocol === 'https:' });
+
+    ProcessService.State.socket = io(url, {
         reconnection: false,
+        secure: location.protocol === 'https:'
     });
 
     ProcessService.State.socket.on("connect", () => {
