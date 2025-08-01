@@ -16,9 +16,9 @@ const sslCert = production ? fs.readFileSync(process.env.SSL_CERT, 'utf8') : ''
 let httpServer
 
 if (production)
-	httpServer = createServer({
-	key: sslKey,
-	cert: sslCert,
+	httpServer = https.createServer({
+		key: sslKey,
+		cert: sslCert,
 	}, app);
 else
 	httpServer = http.createServer(app);
