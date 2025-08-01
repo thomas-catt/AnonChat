@@ -90,7 +90,7 @@ const connectSocket = () => {
         ProcessService.State.afkUsers = afkUsers;
         ProcessService.State.latency = latency;
 
-        if (latency >= 300) {
+        if (latency >= 1000) {
             Console.print(`High latency! (${latency}ms)` + "\n", {bg: "yellow-dark"});
         }
     });
