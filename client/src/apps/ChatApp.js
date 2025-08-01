@@ -102,7 +102,7 @@ const connectSocket = () => {
     });
 
     const connectionError  = (reason) => {
-        Console.print("Failed to connect to chat server (" + reason + "), type /connect to try again." + "\n", {text: "white", bg: "red"});
+        Console.print("Failed to connect to chat server (" + reason + ") (type /connect to manually connect)." + "\n", {text: "white", bg: "red"});
         ProcessService.State.connectionStatus = "disconnected";
         if (pingInterval) clearInterval(pingInterval);
     }
