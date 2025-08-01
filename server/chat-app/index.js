@@ -9,7 +9,7 @@ import express from 'express';
 const app = express();
 
 
-const production = process.env.SSL_KEY ? true : false;
+const production = process.env.NODE_ENV == 'production'
 const sslKey = production ? fs.readFileSync(process.env.SSL_KEY, 'utf8') : ''
 const sslCert = production ? fs.readFileSync(process.env.SSL_CERT, 'utf8') : ''
 
