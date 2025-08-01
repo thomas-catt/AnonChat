@@ -43,7 +43,9 @@ io.on("connection", (socket) => {
 	
 	
 	socket.on("ping", (data) => {
-		userLastPing[socket.id] = Date.now();
+		const now = Date.now();
+
+		userLastPing[socket.id] = now;
 		// Remove from AFK if they were there (user is back)
 		if (afkUsers[socket.id]) {
 			delete afkUsers[socket.id];
@@ -51,8 +53,6 @@ io.on("connection", (socket) => {
 		}
 		
 		// Remove users who haven't pinged in the last 8 seconds (move to AFK)
-		const now = Date.now();
-		const latency = now - (new Date(data.time));
 		for (const [id, last] of Object.entries(userLastPing)) {
 			if (now - last > 9000) {
 				delete userLastPing[id];
@@ -71,10 +71,16 @@ io.on("connection", (socket) => {
 			}
 		}
 		
-		console.log(`Ping received from ${socket.id}: latency ${latency}ms`);
+		console.log(`Ping received from ${socket.id}.`);
 		
 		// Broadcast current user count
-		socket.emit("pong", { latency, onlineUsers: Object.keys(userLastPing).length, afkUsers: Object.keys(afkUsers).length });
+		socket.emit("pong", { now, onlineUsers: Object.keys(userLastPing).length, afkUsers: Object.keys(afkUsers).length });
+	});
+
+	socket.on("latency-ping", ({ now, userId }) => {
+		const latency = Math.ceil((Date.now() - new Date(now))/2);
+		console.log(`Latency ping from ${userId}: ${latency}ms`);
+		socket.emit("latency-pong", { latency });
 	});
 	
 	socket.on("message", (message) => {

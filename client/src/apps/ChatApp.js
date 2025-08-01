@@ -96,13 +96,15 @@ const connectSocket = () => {
         // Start ping interval
         if (pingInterval) clearInterval(pingInterval);
         pingInterval = setInterval(() => {
-            if (document.hasFocus())
+            if (document.hasFocus()) {
+                console.log("sent ping");
                 ProcessService.State.socket.emit("ping", { time: new Date(), userId: ProcessService.State.userId });
+            }
         }, 2000);
     });
 
     const connectionError  = (reason) => {
-        Console.print("Failed to connect to chat server (" + reason + ") (type /connect to manually connect)." + "\n", {text: "white", bg: "red"});
+        Console.print("Failed to connect to chat server (" + reason + ") (type /connect to manually connect)." + "\n", {text: "red"});
         ProcessService.State.connectionStatus = "disconnected";
         if (pingInterval) clearInterval(pingInterval);
     }
@@ -122,7 +124,7 @@ const connectSocket = () => {
     });
 
     ProcessService.State.socket.on("disconnect", () => {
-        Console.print("Lost connection to chat server 🥀, type /connect to connect again." + "\n", {text: "red"});
+        Console.print("Lost connection to chat server 🥀, reconnecting..." + "\n", {text: "red"});
         ProcessService.State.connectionStatus = "disconnected";
         if (pingInterval) clearInterval(pingInterval);
     });
@@ -149,22 +151,27 @@ const connectSocket = () => {
             Console.print(`An anonymous user`, color);
             Console.print(` is back from being AFK. (${ProcessService.State.onlineUsers} online, ${ProcessService.State.afkUsers} AFK)` + "\n", {text: "green"});
         } else if (action === "remove") {
-            Console.print(`An AFK user has been removed for being AFK. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
+            Console.print(`An anonymous user`, color);
+            Console.print(` has been removed for being AFK. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
         } else if (action === "disconnect") {
             Console.print(`An anonymous user`, color);
             Console.print(` has left. (${ProcessService.State.onlineUsers} online)` + "\n", {text: "red"});
         }
     });
 
-    ProcessService.State.socket.on("pong", ({onlineUsers, afkUsers, latency}) => {
+    ProcessService.State.socket.on("pong", ({onlineUsers, afkUsers, now}) => {
         ProcessService.State.onlineUsers = onlineUsers;
         ProcessService.State.afkUsers = afkUsers;
-        ProcessService.State.latency = latency;
+        
+        ProcessService.State.socket.emit("latency-ping", { now, userId: ProcessService.State.userId });        
+    });
 
+    ProcessService.State.socket.on("latency-pong", ({latency}) => {
+        ProcessService.State.latency = latency;
         if ((latency >= 500) && !ProcessService.State.latencyWarned) {
-            Console.print(`[!] You have very high latency (${latency}ms) from the chat server. Chat would feel very slow or delayed.` + "\n", {bg: "yellow-dark", bold: true});
+            Console.print(`[!] You have very high latency (${latency}ms) from the chat server. Chat would feel very slow or delayed.` + "\n", {text: "yellow", bold: true});
             ProcessService.State.latencyWarned = true;
-        }
+        }        
     });
 
     ProcessService.State.socket.on("message", (message) => {
@@ -172,7 +179,7 @@ const connectSocket = () => {
         console.log(color, message);
         
         Console.print(formatDate(message.time) + " ", {text: "gray"});
-        Console.print(" > ", color);
+        Console.print(" > ", {...color, bold: true});
         Console.print(message.message + "\n");
     });
 
