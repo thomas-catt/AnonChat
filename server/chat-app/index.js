@@ -1,5 +1,7 @@
 import { createServer } from "https";
 import { Server } from "socket.io";
+import dotenv from 'dotenv';
+dotenv.config()
 import fs from 'fs';
 
 const production = process.env.NODE_ENV == 'production'
